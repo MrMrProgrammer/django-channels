@@ -2,3 +2,4 @@ django
 channels
 daphne
 django-environ
+channels_redis
