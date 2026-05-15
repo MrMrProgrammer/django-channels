@@ -4,3 +4,5 @@ daphne
 django-environ
 channels_redis
 djangorestframework
+flake8
+isort
