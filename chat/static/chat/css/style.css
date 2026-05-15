@@ -672,3 +672,12 @@ body {
   .fa {
     font-size: 1.5em !important;
   }
+  li {
+    margin: 0 15px;
+  }
+  li > p {
+    margin: 0;
+  }
+  #chat-message-input {
+    font-size: 19px;
+  }
