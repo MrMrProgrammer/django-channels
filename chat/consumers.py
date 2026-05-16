@@ -14,15 +14,25 @@ class ChatConsumer(WebsocketConsumer):
 
     def new_message(self, data):
         message = data["message"]
-        user_model = User.objects.filter(username=data["username"]).first()
+        room_name = data["room_name"]
+        username = data["username"]
+
+        user_model = User.objects.filter(username=username).first()
+        chat = models.Chat.objects.filter(room_name=room_name).first()
+
+        print("----------------------------------")
+        print(user_model, chat)
+        print("----------------------------------")
+
         message_model = models.Message.objects.create(
             content=message,
-            author=user_model
+            author=user_model,
+            chat=chat
         )
         self.send_to_chat_message(eval(self.message_serializer(message_model)))
 
     def fetch_message(self, data):
-        qs = models.Message.last_messages(self)
+        qs = models.Message.last_messages(self, room_name=data["room_name"])
         self.message_serializer(qs)
         message_json = self.message_serializer(qs)
         content = {
@@ -66,6 +76,8 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
+
+        print(text_data_json)
         command = text_data_json["command"]
 
         self.commands[command](self, text_data_json)
