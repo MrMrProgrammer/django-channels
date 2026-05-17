@@ -274,6 +274,43 @@
         + '/'
     );
 
+    const chatSocket2 = new WebSocket(
+        (window.location.protocol === 'https:' ? 'wss://' : 'ws://')
+        + window.location.host
+        + '/ws/chat/'
+        + 'listener'
+        + '/'
+    );
+
+    chatSocket2.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+
+        if (!data || !data.members || !data["__str__"] || !data.room_name || !data.content) {
+            console.warn("Received incomplete data for notification:", data);
+            return;
+        }
+
+        if (!data.members.includes(username)) return;
+        if (data["__str__"] === username) return;
+        if (data.room_name === roomName) return;
+        if (!("Notification" in window)) {
+            alert("این مرورگر از نوتیفیکیشن‌های دسکتاپ پشتیبانی نمی‌کند.");
+        } else if (Notification.permission === "granted") {
+            var notification = new Notification(`${data["__str__"]}: ${data.content}`);
+            console.log("Notification displayed");
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(function (permission) {
+                if (permission === "granted") {
+                    var notification = new Notification("Hi there!");
+                    console.log("Notification permission granted and displayed");
+                }
+            });
+        }
+        console.log("it is working (notification sent)");
+    };
+
+
+
     // LOAD OLD MESSAGES
     chatSocket.onopen = function () {
 

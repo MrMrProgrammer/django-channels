@@ -17,12 +17,10 @@ class ChatConsumer(WebsocketConsumer):
         room_name = data["room_name"]
         username = data["username"]
 
+        self.notif(data)
+
         user_model = User.objects.filter(username=username).first()
         chat = models.Chat.objects.filter(room_name=room_name).first()
-
-        print("----------------------------------")
-        print(user_model, chat)
-        print("----------------------------------")
 
         message_model = models.Message.objects.create(
             content=message,
@@ -30,6 +28,26 @@ class ChatConsumer(WebsocketConsumer):
             chat=chat
         )
         self.send_to_chat_message(eval(self.message_serializer(message_model)))
+
+    def notif(self, data):
+        room_name = data["room_name"]
+        chat_room_qs = models.Chat.objects.filter(room_name=room_name)
+
+        members = []
+
+        for member in chat_room_qs[0].members.all():
+            members.append(member.username)
+
+        async_to_sync(self.channel_layer.group_send)(
+            group="chat_listener",
+            message={
+                "type": "chat_message",
+                "content": data["message"],
+                "__str__": data["username"],
+                "room_name": room_name,
+                "members": members
+            }
+        )
 
     def fetch_message(self, data):
         qs = models.Message.last_messages(self, room_name=data["room_name"])
@@ -76,10 +94,7 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
-
-        print(text_data_json)
         command = text_data_json["command"]
-
         self.commands[command](self, text_data_json)
 
     def send_to_chat_message(self, message):
